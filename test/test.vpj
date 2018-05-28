@@ -277,6 +277,12 @@
             GUID="{85CE65E1-131F-44A2-A621-6A04E86E6E61}"/>
     </CustomFolders>
     <Files AutoFolders="DirectoryView">
+        <F N="chip.cpp"/>
+        <F N="chip.h"/>
         <F N="main.cpp"/>
+        <F N="mainwindow.cpp"/>
+        <F N="mainwindow.h"/>
+        <F N="view.cpp"/>
+        <F N="view.h"/>
     </Files>
 </Project>

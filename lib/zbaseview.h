@@ -2,6 +2,7 @@
 #define ZBASEVIEW_H_
 #include <QGraphicsView>
 class ZBaseViewPrivate;
+class ZBaseScene;
 class ZBaseView : public QGraphicsView
 {
     Q_OBJECT
@@ -10,6 +11,7 @@ public:
     ~ZBaseView();
     virtual void setScene(QGraphicsScene *scene );
 protected:
+    void paintEvent( QPaintEvent *event ) override;
 
 private:
     ZBaseViewPrivate *_p_data;

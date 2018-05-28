@@ -2,6 +2,7 @@
 <Workspace Version="10.0" VendorName="SlickEdit">
 	<Projects>
 		<Project File="lib/lib.vpj"/>
+		<Project File="../qtbase-everywhere-src-5.10.1/src/qtsrc.vpj"/>
 		<Project File="test/test.vpj"/>
 	</Projects>
 </Workspace>

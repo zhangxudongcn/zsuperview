@@ -97,3 +97,28 @@ void ZBaseScene::removeChild( ZBaseScene *child_scene )
         child_scene->removeFromParent();
     }
 }
+
+void ZBaseScene::removeChildren()
+{
+
+}
+
+void ZBaseScene::drawBackground(QPainter *painter, const QRectF &rect)
+{
+    if ( this == rootScene() ) {
+        // draw background
+    }
+}
+
+void ZBaseScene::drawForeground(QPainter *painter, const QRectF &rect)
+{
+    // draw nothing
+}
+
+void ZBaseScene::drawItems(QPainter *painter, int numItems,
+                           QGraphicsItem *items[],
+                           const QStyleOptionGraphicsItem options[],
+                           QWidget *widget)
+{
+    QGraphicsScene::drawItems(painter,numItems,items,options,widget);
+}

@@ -31,7 +31,6 @@ void GraphicsView::wheelEvent(QWheelEvent *e)
 #endif
 void GraphicsView::paintEvent( QPaintEvent *event ) 
 {
-    qDebug( "call GraphicsView paintEvent" );
     ZBaseView::paintEvent( event );
 }
 
