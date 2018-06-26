@@ -22,7 +22,6 @@ protected:
 #if QT_CONFIG(wheelevent)
     void wheelEvent(QWheelEvent *) override;
 #endif
-    void paintEvent( QPaintEvent *event ) override;
 
 private:
     View *view;

@@ -22,10 +22,6 @@ protected:
     void drawBackground(QPainter *painter, const QRectF &rect) override;
     void drawForeground(QPainter *painter, const QRectF &rect) override;
 
-    void drawItems(QPainter *painter, int numItems,
-                           QGraphicsItem *items[],
-                           const QStyleOptionGraphicsItem options[],
-                           QWidget *widget = Q_NULLPTR) override;
     ZBaseScene* prevSceneInRenderQueue() const;
     ZBaseScene* nextSceneInRenderQueue() const;
     ZBaseScene* topSceneInRenderQueue() const;

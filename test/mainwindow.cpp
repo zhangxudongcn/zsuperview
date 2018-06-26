@@ -22,6 +22,7 @@ void MainWindow::populateScene()
 {
     scene = new ZBaseScene();
 
+    qDebug( "width = %f, height = %f", scene->sceneRect().width(), scene->sceneRect().height() );
     QImage image(":/qt4logo.png");
 
     // Populate scene
@@ -43,4 +44,5 @@ void MainWindow::populateScene()
             ++nitems;
         }
     }
+    qDebug( "width = %f, height = %f", scene->sceneRect().width(), scene->sceneRect().height() );
 }

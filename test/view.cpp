@@ -29,10 +29,6 @@ void GraphicsView::wheelEvent(QWheelEvent *e)
     }
 }
 #endif
-void GraphicsView::paintEvent( QPaintEvent *event ) 
-{
-    ZBaseView::paintEvent( event );
-}
 
 View::View(const QString &name, QWidget *parent)
     : QFrame(parent)

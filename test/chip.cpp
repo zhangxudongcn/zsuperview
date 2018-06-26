@@ -80,8 +80,9 @@ void Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
     Q_UNUSED(widget);
 
     QColor fillColor = (option->state & QStyle::State_Selected) ? color.dark(150) : color;
-    if (option->state & QStyle::State_MouseOver)
+    if (option->state & QStyle::State_MouseOver) {
         fillColor = fillColor.light(125);
+    }
 
     const qreal lod = option->levelOfDetailFromTransform(painter->worldTransform());
     if (lod < 0.2) {
@@ -178,6 +179,7 @@ void Chip::mousePressEvent(QGraphicsSceneMouseEvent *event)
 void Chip::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
     if (event->modifiers() & Qt::ShiftModifier) {
+        qDebug( "chip mouse move" );
         stuff << event->pos();
         update();
         return;
