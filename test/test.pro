@@ -7,6 +7,8 @@ TARGET = Debug/test
 INCLUDEPATH += . ../lib
 QT += widgets opengl printsupport
 CONFIG += debug
+QMAKE_CXXFLAGS += -fopenmp -std=c++11
+QMAKE_LFLAGS += -fopenmp
 
 # The following define makes your compiler warn you if you use any
 # feature of Qt which has been marked as deprecated (the exact warnings

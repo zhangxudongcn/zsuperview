@@ -132,6 +132,7 @@ void Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
     }
 
     // Draw lines
+    #if 1
     QVarLengthArray<QLineF, 36> lines;
     if (lod >= 0.5) {
         for (int i = 0; i <= 10; i += (lod > 0.5 ? 1 : 2)) {
@@ -155,6 +156,7 @@ void Chip::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
         lines.append(lineData, 6);
     }
     painter->drawLines(lines.data(), lines.size());
+    #endif
 
     // Draw red ink
     if (stuff.size() > 1) {

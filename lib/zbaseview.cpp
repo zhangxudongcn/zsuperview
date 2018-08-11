@@ -3,6 +3,7 @@
 #include <QPaintEvent>
 #include <QStyleOptionRubberBand>
 #include <QStyle>
+#include <omp.h>
 
 ZBaseView::ZBaseView( QWidget *parent ) : QGraphicsView( parent ), _p_data( nullptr )
 {
@@ -28,33 +29,56 @@ void ZBaseView::paintEvent( QPaintEvent *event )
         QGraphicsView::paintEvent(event);
         return;
     }
-    qDebug( "call paint event" );
-    //QGraphicsView::paintEvent(event);
-    //return;
-    // Set up painter state protection.
-    //zxd d->scene->d_func()->painterStateProtection = !(d->optimizationFlags & DontSavePainterState);
-
-    // Determine the exposed region
-    QRegion exposedRegion = event->region();
-    QRect viewportExposedRect = exposedRegion.boundingRect();
-    QRectF sceneExposedRect = mapToScene( viewportExposedRect ).boundingRect();
+    qDebug( "call paint event: %d", event->region().rects().size() );
+    //QGraphicsView::paintEvent(event);return;
+    
 
     // Set up the painter
     QPainter painter(viewport());
 
     // draw background
-    painter.fillRect( viewportExposedRect, backgroundBrush() );
+    //drawBackground(&painter, viewportExposedRect );
+    //painter.fillRect( viewportExposedRect, backgroundBrush() );
 
 
     painter.save(); // save for rubberband
     // Set up render hints
     painter.setRenderHints(painter.renderHints(), false);
     painter.setRenderHints(renderHints(), true);
-    scene()->render( &painter, viewportExposedRect, sceneExposedRect );
-    // Rubberband
+
+    QVector<QRect> viewport_exposed_rects;
+    QVector<QRectF> scene_exposed_rects;
+    for ( auto rect_iter = event->region().begin(); rect_iter < event->region().end(); rect_iter++ ) {
+        viewport_exposed_rects.push_back( *rect_iter );
+        qDebug( "paint rect : %d, %d, %d, %d", rect_iter->left(), rect_iter->top(), rect_iter->width(), rect_iter->height() );
+        scene_exposed_rects.push_back( mapToScene( *rect_iter ).boundingRect() );
+    }
+
+    // render double buffer
+    QList<ZBaseScene *> render_list = ((ZBaseScene*)scene())->renderList();
+    #pragma omp parallel for
+    for ( int scene_index = 0; scene_index < render_list.size(); scene_index++ ) {
+        qDebug("i = %d, I am Thread %d", scene_index, omp_get_thread_num());
+        if ( render_list[scene_index]->isDoubleBufferPainted() ) {
+            render_list[scene_index]->renderDoubleBuffer( painter, viewport_exposed_rects, scene_exposed_rects);
+        } else {
+            QRect v_rect = viewport()->rect();
+            QRectF s_rect = mapToScene( v_rect ).boundingRect();
+            render_list[scene_index]->renderDoubleBuffer( painter, v_rect, s_rect );
+        }
+    }
+
+    //#pragma omp parallel for
+
+    for ( int r_index = 0; r_index < viewport_exposed_rects.size(); r_index++ ) { // openmp 不支持 for( auto &item : container )格式
+        for ( auto scene_iter = render_list.rbegin(); scene_iter != render_list.rend(); scene_iter++ ) {
+            (*scene_iter)->drawScene( &painter, viewport_exposed_rects[r_index], scene_exposed_rects[r_index] );
+        }
+    }
+
+    //scene()->render(&painter, viewportExposedRect, sceneExposedRect);
     painter.restore(); // restore for rubberband
     
-
     if (!rubberBandRect().isEmpty()) {
         QStyleOptionRubberBand option;
         option.initFrom(viewport());
@@ -72,4 +96,13 @@ void ZBaseView::paintEvent( QPaintEvent *event )
 
     // Restore painter state protection.
     //d->scene->d_func()->painterStateProtection = true;
+}
+
+void ZBaseView::scrollContentsBy(int dx, int dy)
+{
+    QList<ZBaseScene *> render_list = ((ZBaseScene*)scene())->renderList();
+    for ( auto &scene : render_list ) {
+        scene->translateDoubleBuffer(dx, dy, viewport()->rect());
+    }
+    QGraphicsView::scrollContentsBy(dx, dy);
 }

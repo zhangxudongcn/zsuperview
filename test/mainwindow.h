@@ -15,6 +15,8 @@ private:
     void populateScene();
 
     ZBaseScene *scene;
+    ZBaseScene *top_scene;
+    ZBaseScene *tmp_scene;
 };
 
 #endif // MAINWINDOW_H

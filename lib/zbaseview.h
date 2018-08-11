@@ -12,6 +12,7 @@ public:
     virtual void setScene(QGraphicsScene *scene );
 protected:
     void paintEvent( QPaintEvent *event ) override;
+    void scrollContentsBy(int dx, int dy) override;
 
 private:
     ZBaseViewPrivate *_p_data;
