@@ -5,7 +5,7 @@
 #include <QStyle>
 #include <omp.h>
 
-ZBaseView::ZBaseView( QWidget *parent ) : QGraphicsView( parent ), _p_data( nullptr )
+ZBaseView::ZBaseView( QWidget *parent ) : QGraphicsView( parent )
 {
 }
 
@@ -29,7 +29,7 @@ void ZBaseView::paintEvent( QPaintEvent *event )
         QGraphicsView::paintEvent(event);
         return;
     }
-    qDebug( "call paint event: %d", event->region().rects().size() );
+    qDebug( "call paint event: %d", event->region().rects().count() );
     //QGraphicsView::paintEvent(event);return;
     
 
@@ -56,20 +56,14 @@ void ZBaseView::paintEvent( QPaintEvent *event )
 
     // render double buffer
     QList<ZBaseScene *> render_list = ((ZBaseScene*)scene())->renderList();
+    QPointF scene_point = mapToScene( QPoint(0,0));
     #pragma omp parallel for
     for ( int scene_index = 0; scene_index < render_list.size(); scene_index++ ) {
         qDebug("i = %d, I am Thread %d", scene_index, omp_get_thread_num());
-        if ( render_list[scene_index]->isDoubleBufferPainted() ) {
-            render_list[scene_index]->renderDoubleBuffer( painter, viewport_exposed_rects, scene_exposed_rects);
-        } else {
-            QRect v_rect = viewport()->rect();
-            QRectF s_rect = mapToScene( v_rect ).boundingRect();
-            render_list[scene_index]->renderDoubleBuffer( painter, v_rect, s_rect );
-        }
+        render_list[scene_index]->renderDoubleBuffer( painter, viewport_exposed_rects, scene_exposed_rects, matrix(), scene_point, viewport()->rect() );
     }
 
     //#pragma omp parallel for
-
     for ( int r_index = 0; r_index < viewport_exposed_rects.size(); r_index++ ) { // openmp 不支持 for( auto &item : container )格式
         for ( auto scene_iter = render_list.rbegin(); scene_iter != render_list.rend(); scene_iter++ ) {
             (*scene_iter)->drawScene( &painter, viewport_exposed_rects[r_index], scene_exposed_rects[r_index] );
@@ -101,8 +95,10 @@ void ZBaseView::paintEvent( QPaintEvent *event )
 void ZBaseView::scrollContentsBy(int dx, int dy)
 {
     QList<ZBaseScene *> render_list = ((ZBaseScene*)scene())->renderList();
+    // get update viewport rects and scene rects
+
     for ( auto &scene : render_list ) {
-        scene->translateDoubleBuffer(dx, dy, viewport()->rect());
+        scene->translateDoubleBuffer(dx, dy, viewport()->rect() );
     }
     QGraphicsView::scrollContentsBy(dx, dy);
 }

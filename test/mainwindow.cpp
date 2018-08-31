@@ -10,7 +10,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     populateScene();
     qDebug( " child num = %d", scene->children().size());
-    qDebug(" render list num = %d", scene->renderList().size());
 
     View *view = new View("Top left view");
     view->view()->setScene( scene );
@@ -47,23 +46,23 @@ void MainWindow::populateScene()
     }
     qDebug( "x0: %f, y0: %f, width = %f, height = %f", scene->sceneRect().x(), scene->sceneRect().y(), scene->sceneRect().width(), scene->sceneRect().height() );
     scene->setBackgroundBrush( Qt::white );
-    scene->setDoubleBufferEnabled(true );
 
+    int item_num = 2;
     QRectF scene_rect = scene->sceneRect();
     top_scene = new ZBaseScene();
-    top_scene->addLine( scene_rect.left(), scene_rect.top(), scene_rect.right(), scene_rect.bottom(), QPen( Qt::red, 10 ) );
-    for ( int i = 0; i < 10000; i++ ) {
+    for ( int i = 0; i < item_num; i++ ) {
         top_scene->addLine( random() % int( scene_rect.width() ) - scene_rect.width()/2, random() % int( scene_rect.height() ) - scene_rect.height()/2, 
-                            random() % int( scene_rect.width() )- scene_rect.width()/2, random() % int( scene_rect.height() ) - scene_rect.height()/2, QPen(Qt::red, 10));
+                            random() % int( scene_rect.width() )- scene_rect.width()/2, random() % int( scene_rect.height() ) - scene_rect.height()/2, QPen(Qt::red, 0));
     }
-    top_scene->setDoubleBufferEnabled(true );
     scene->addChild(  top_scene );
     tmp_scene = new ZBaseScene();
-    tmp_scene->setDoubleBufferEnabled(true );
-    //for ( int i = 0; i < 10000; i++ ) {
-    //    tmp_scene->addLine( random() % int( scene_rect.width() ) - scene_rect.width()/2, random() % int( scene_rect.height() ) - scene_rect.height()/2, 
-    //                        random() % int( scene_rect.width() )- scene_rect.width()/2, random() % int( scene_rect.height() ) - scene_rect.height()/2, QPen(Qt::blue, 10));
-    //}
-    top_scene->addChild(  tmp_scene );
+    double step = scene_rect.width() / item_num;
+    for ( int i = 0; i < item_num; i++ ) {
+        //tmp_scene->addLine( random() % int( scene_rect.width() ) - scene_rect.width()/2, random() % int( scene_rect.height() ) - scene_rect.height()/2, 
+          //                  random() % int( scene_rect.width() )- scene_rect.width()/2, random() % int( scene_rect.height() ) - scene_rect.height()/2, QPen(Qt::blue, 10));
+        
+        tmp_scene->addLine( scene_rect.left() + i * step, scene_rect.top(), scene_rect.left() + i * step, scene_rect.bottom(), QPen(Qt::blue, 0));
 
+    }
+    top_scene->addChild(  tmp_scene );
 }

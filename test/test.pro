@@ -4,7 +4,7 @@
 
 TEMPLATE = app
 TARGET = Debug/test
-INCLUDEPATH += . ../lib
+INCLUDEPATH += . ../core
 QT += widgets opengl printsupport
 CONFIG += debug
 QMAKE_CXXFLAGS += -fopenmp -std=c++11
@@ -22,8 +22,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 # Input
-HEADERS += ../lib/zbasescene.h ../lib/zbaseview.h
-SOURCES += main.cpp ../lib/zbasescene.cpp ../lib/zbaseview.cpp
+HEADERS += ../core/zbasescene.h ../core/zbaseview.h
+SOURCES += main.cpp ../core/zbasescene.cpp ../core/zbaseview.cpp
 
 RESOURCES += images.qrc
 
