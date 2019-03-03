@@ -2,6 +2,7 @@
 #define ZBASESCENE_H_
 
 #include <QGraphicsScene>
+
 class ZBaseScenePrivate;
 class ZBaseScene : public QGraphicsScene {
     friend class ZBaseView;
@@ -38,8 +39,8 @@ protected:
     void drawForeground(QPainter *painter, const QRectF &rect) override;
     void drawScene( QPainter *painter, const QRect &viewport_exposed_rect, const QRectF &scene_exposed_rect);
 
-    virtual void renderDoubleBuffer( const QPainter &painter, const QVector<QRect> v_exposed_rects, const QVector<QRectF> &s_exposed_rects,
-                                     const QMatrix &matrix, const QPointF &scene_point, const QRect &viewport_rect );
+    virtual void renderDoubleBuffer( const QPainter &painter, const QList<QRect> v_exposed_rects, const QList<QRectF> &s_exposed_rects,
+                                     const QTransform &transform, const QPointF &scene_point, const QRect &viewport_rect );
     virtual void translateDoubleBuffer( int dx, int dy, const QRect &viewport_rect );
 protected slots:
     void selfChangedSlot( const QList<QRectF> &region );

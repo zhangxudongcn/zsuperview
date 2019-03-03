@@ -51,7 +51,6 @@
 #include "chip.h"
 
 #include <QtWidgets>
-
 Chip::Chip(const QColor &color, int x, int y)
 {
     this->x = x;

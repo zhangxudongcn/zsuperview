@@ -2,7 +2,6 @@
 #define MAINWINDOW_H
 
 #include <QWidget>
-
 class ZBaseScene;
 class MainWindow : public QWidget
 {

@@ -4,11 +4,9 @@
 #include <QFrame>
 #include "zbaseview.h"
 
-QT_BEGIN_NAMESPACE
 class QLabel;
 class QSlider;
 class QToolButton;
-QT_END_NAMESPACE
 
 class View;
 

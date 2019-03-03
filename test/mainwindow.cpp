@@ -47,6 +47,7 @@ void MainWindow::populateScene()
     qDebug( "x0: %f, y0: %f, width = %f, height = %f", scene->sceneRect().x(), scene->sceneRect().y(), scene->sceneRect().width(), scene->sceneRect().height() );
     scene->setBackgroundBrush( Qt::white );
 
+    //return;
     int item_num = 2;
     QRectF scene_rect = scene->sceneRect();
     top_scene = new ZBaseScene();

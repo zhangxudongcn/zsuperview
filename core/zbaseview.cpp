@@ -4,7 +4,6 @@
 #include <QStyleOptionRubberBand>
 #include <QStyle>
 #include <omp.h>
-
 ZBaseView::ZBaseView( QWidget *parent ) : QGraphicsView( parent )
 {
 }
@@ -29,7 +28,7 @@ void ZBaseView::paintEvent( QPaintEvent *event )
         QGraphicsView::paintEvent(event);
         return;
     }
-    qDebug( "call paint event: %d", event->region().rects().count() );
+    qDebug( "call paint event: %d", event->region().rectCount() );
     //QGraphicsView::paintEvent(event);return;
     
 
@@ -46,8 +45,8 @@ void ZBaseView::paintEvent( QPaintEvent *event )
     painter.setRenderHints(painter.renderHints(), false);
     painter.setRenderHints(renderHints(), true);
 
-    QVector<QRect> viewport_exposed_rects;
-    QVector<QRectF> scene_exposed_rects;
+    QList<QRect> viewport_exposed_rects;
+    QList<QRectF> scene_exposed_rects;
     for ( auto rect_iter = event->region().begin(); rect_iter < event->region().end(); rect_iter++ ) {
         viewport_exposed_rects.push_back( *rect_iter );
         qDebug( "paint rect : %d, %d, %d, %d", rect_iter->left(), rect_iter->top(), rect_iter->width(), rect_iter->height() );
@@ -60,10 +59,9 @@ void ZBaseView::paintEvent( QPaintEvent *event )
     #pragma omp parallel for
     for ( int scene_index = 0; scene_index < render_list.size(); scene_index++ ) {
         qDebug("i = %d, I am Thread %d", scene_index, omp_get_thread_num());
-        render_list[scene_index]->renderDoubleBuffer( painter, viewport_exposed_rects, scene_exposed_rects, matrix(), scene_point, viewport()->rect() );
+        render_list[scene_index]->renderDoubleBuffer( painter, viewport_exposed_rects, scene_exposed_rects, transform(), scene_point, viewport()->rect() );
     }
 
-    //#pragma omp parallel for
     for ( int r_index = 0; r_index < viewport_exposed_rects.size(); r_index++ ) { // openmp 不支持 for( auto &item : container )格式
         for ( auto scene_iter = render_list.rbegin(); scene_iter != render_list.rend(); scene_iter++ ) {
             (*scene_iter)->drawScene( &painter, viewport_exposed_rects[r_index], scene_exposed_rects[r_index] );

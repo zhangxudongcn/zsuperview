@@ -4,6 +4,9 @@
 #include <QDesktopWidget>
 #include <QApplication>
 #include <QPainter>
+#include <QScreen>
+#include <omp.h>
+
 class ZBaseScenePrivate {
 public:
     ZBaseScenePrivate()
@@ -18,12 +21,22 @@ public:
             delete _double_buffer;
         }
     }
+    void eraseDoubleBuffer( const QRect &rect )
+    {
+        QRect r = rect & _double_buffer->rect();
+        if ( r.isEmpty() == false ) {
+            // erase buffer
+            for (int dst_y_index = r.top(); dst_y_index <= r.bottom(); dst_y_index++) {
+                memset(_double_buffer->scanLine(dst_y_index) + r.left() * sizeof(QRgb), 0, sizeof(QRgb) * r.width());
+            }
+        }
+    }
     ZBaseScene *_parent_scene;
     bool _is_visible;
     QList<ZBaseScene*> _children;
     QImage *_double_buffer;
     bool _is_changed;
-    QMatrix _matrix;
+    QTransform _transform;
     QPointF _scene_point;
     QRect _viewport_rect;
 };
@@ -31,16 +44,11 @@ public:
 ZBaseScene::ZBaseScene() : QGraphicsScene( 0 ), _p_data( new ZBaseScenePrivate() )
 {
     connect( this, &ZBaseScene::changed, this, &ZBaseScene::selfChangedSlot );
-    QDesktopWidget *desktop_widget = QApplication::desktop();
-    int screen_count = QGuiApplication::screens().size();
-    if (desktop_widget->isVirtualDesktop()) {
-        screen_count = 1;
-    }
     int width = 0;
     int height = 0;
-    for (int index = 0; index < screen_count; index++) {
-        width += desktop_widget->availableGeometry().width();
-        height += desktop_widget->availableGeometry().height();
+    for ( auto screen : qApp->primaryScreen()->virtualSiblings() ) {
+        width += screen->size().width();
+        height += screen->size().height();
     }
     _p_data->_double_buffer = new QImage(width, height, QImage::Format_ARGB32_Premultiplied);
     _p_data->_double_buffer->fill(0); 
@@ -234,7 +242,7 @@ void ZBaseScene::drawForeground(QPainter *painter, const QRectF &rect)
 void ZBaseScene::drawScene( QPainter *painter, const QRect &viewport_exposed_rect, const QRectF & /*scene_exposed_rect */)
 {
     if ( isSceneVisible() ) {
-         painter->drawImage( viewport_exposed_rect, *_p_data->_double_buffer, viewport_exposed_rect, Qt::NoFormatConversion );
+        painter->drawImage( viewport_exposed_rect, *_p_data->_double_buffer, viewport_exposed_rect, Qt::NoFormatConversion );
     }
 }
 
@@ -255,26 +263,26 @@ bool ZBaseScene::event(QEvent *event)
     return false;
 }
 
-
-
-void ZBaseScene::renderDoubleBuffer( const QPainter &painter, const QVector<QRect> viewport_exposed_rects, const QVector<QRectF> &scene_exposed_rects,
-                                     const QMatrix &matrix, const QPointF &scene_point, const QRect &viewport_rect )
+void ZBaseScene::renderDoubleBuffer( const QPainter &painter, const QList<QRect> viewport_exposed_rects, const QList<QRectF> &scene_exposed_rects,
+                                     const QTransform &transform, const QPointF &scene_point, const QRect &viewport_rect )
 {
-    if ( _p_data->_is_changed || _p_data->_matrix != matrix || _p_data->_scene_point != scene_point || _p_data->_viewport_rect.contains( viewport_rect ) == false  )  {
+    if ( _p_data->_is_changed || _p_data->_transform != transform || _p_data->_scene_point != scene_point || _p_data->_viewport_rect.contains( viewport_rect ) == false  )  {
         QPainter buffer_painter(_p_data->_double_buffer);
         buffer_painter.setRenderHints(buffer_painter.renderHints(), false);
         buffer_painter.setRenderHints(painter.renderHints(), true);
+
         for (int r_index = 0; r_index < viewport_exposed_rects.size(); r_index++) {
+            QRect v_rect = viewport_exposed_rects[r_index];
+            QRectF s_rect = scene_exposed_rects[r_index];
+
             // erase buffer
-            for (int y_index = viewport_exposed_rects[r_index].top(); y_index <= viewport_exposed_rects[r_index].bottom(); y_index++) {
-                memset(_p_data->_double_buffer->scanLine(y_index) + viewport_exposed_rects[r_index].left() * sizeof(QRgb), 0,
-                       sizeof(QRgb) * viewport_exposed_rects[r_index].width());
-            }
+            _p_data->eraseDoubleBuffer( v_rect );
+
             // render scene
-            render(&buffer_painter, viewport_exposed_rects[r_index], scene_exposed_rects[r_index]);
+            render(&buffer_painter, v_rect, s_rect);
         }
         _p_data->_is_changed = false;
-        _p_data->_matrix = matrix;
+        _p_data->_transform = transform;
         _p_data->_scene_point = scene_point;
         _p_data->_viewport_rect = viewport_rect;
     }
@@ -282,10 +290,17 @@ void ZBaseScene::renderDoubleBuffer( const QPainter &painter, const QVector<QRec
 
 void ZBaseScene::translateDoubleBuffer( int dx, int dy, const QRect &viewport_rect )
 {
-        if ( abs( dx ) < viewport_rect.width() && abs( dy ) < viewport_rect.height()) {
-            QPainter painter(_p_data->_double_buffer);
-            painter.drawImage(QPoint( dx, dy ), *(_p_data->_double_buffer), viewport_rect );
-        }
+    if ( abs(dx) < viewport_rect.width() && abs(dy) < viewport_rect.height()) {
+        int x = dx < 0 ? -dx : 0;
+        int y = dy < 0 ? -dy : 0;
+        int width = viewport_rect.width() - abs( dx );
+        int height = viewport_rect.height() - abs( dy );
+        QImage img = _p_data->_double_buffer->copy( x, y, width, height );
+        // erase double buffer, should optimize following code
+        _p_data->_double_buffer->fill(0);
+        QPainter painter(_p_data->_double_buffer);
+        painter.drawImage(QPoint(dx < 0 ? 0 : dx, dy < 0 ? 0 : dy ), img, img.rect() );
+    }
 }
 
 void ZBaseScene::selfChangedSlot( const QList<QRectF> &region )
