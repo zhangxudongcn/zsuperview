@@ -9,17 +9,14 @@
 
 class ZBaseScenePrivate {
 public:
-    ZBaseScenePrivate()
+    ZBaseScenePrivate() : _parent_scene( nullptr ), _is_visible( true ), 
+        _is_double_buffering( false ), _double_buffer_render_flag(false ),
+        _double_buffer(nullptr), _is_changed(false)
     {
-        _parent_scene = nullptr;
-        _is_visible = true;
-        _double_buffer = nullptr;
-        _is_changed = false;
+        setDoubleBuffer();
     }
     ~ZBaseScenePrivate() {
-        if ( _double_buffer ) {
-            delete _double_buffer;
-        }
+        setDoubleBuffer();
     }
     void eraseDoubleBuffer( const QRect &rect )
     {
@@ -31,9 +28,31 @@ public:
             }
         }
     }
+    void setDoubleBuffer()
+    {
+        if ( _is_double_buffering ) {
+            int width = 0;
+            int height = 0;
+            for ( auto screen : qApp->primaryScreen()->virtualSiblings() ) {
+                width += screen->size().width();
+                height += screen->size().height();
+            }
+            _double_buffer = new QImage(width, height, QImage::Format_ARGB32_Premultiplied);
+            _double_buffer->fill(0);
+            _double_buffer_render_flag = true;
+        } else {
+            delete _double_buffer;
+            _double_buffer = nullptr;
+            _is_double_buffering = false;
+            _double_buffer_render_flag = false;
+        }
+    }
+
     ZBaseScene *_parent_scene;
     bool _is_visible;
     QList<ZBaseScene*> _children;
+    bool _is_double_buffering;
+    bool _double_buffer_render_flag; // double buffer render flag, true: need render in renderDoubleBuffer
     QImage *_double_buffer;
     bool _is_changed;
     QTransform _transform;
@@ -44,14 +63,7 @@ public:
 ZBaseScene::ZBaseScene() : QGraphicsScene( 0 ), _p_data( new ZBaseScenePrivate() )
 {
     connect( this, &ZBaseScene::changed, this, &ZBaseScene::selfChangedSlot );
-    int width = 0;
-    int height = 0;
-    for ( auto screen : qApp->primaryScreen()->virtualSiblings() ) {
-        width += screen->size().width();
-        height += screen->size().height();
-    }
-    _p_data->_double_buffer = new QImage(width, height, QImage::Format_ARGB32_Premultiplied);
-    _p_data->_double_buffer->fill(0); 
+    _p_data->setDoubleBuffer();
 }
 
 ZBaseScene::~ZBaseScene()
@@ -197,6 +209,22 @@ void ZBaseScene::moveChildBottom( ZBaseScene *child_scene )
     }
 }
 
+
+bool ZBaseScene::isDoubleBuffering() const
+{
+    return _p_data->_is_double_buffering;
+}
+
+void ZBaseScene::setDoubleBuffering( bool flag )
+{
+    if ( flag != isDoubleBuffering() ) {
+        _p_data->_is_double_buffering = flag;
+        _p_data->setDoubleBuffer();
+        //render double buffer
+    }
+}
+
+// make follow base class function to virtual function
 QList<ZBaseScene*> ZBaseScene::renderList() const
 {
     QList<ZBaseScene*> render_list;
@@ -263,10 +291,15 @@ bool ZBaseScene::event(QEvent *event)
     return false;
 }
 
-void ZBaseScene::renderDoubleBuffer( const QPainter &painter, const QList<QRect> viewport_exposed_rects, const QList<QRectF> &scene_exposed_rects,
-                                     const QTransform &transform, const QPointF &scene_point, const QRect &viewport_rect )
+void ZBaseScene::renderDoubleBuffer( const QPainter &painter, 
+                                     const QList<QRect> viewport_exposed_rects, 
+                                     const QList<QRectF> &scene_exposed_rects,
+                                     const QTransform &transform, 
+                                     const QPointF &scene_point, const QRect &viewport_rect )
 {
-    if ( _p_data->_is_changed || _p_data->_transform != transform || _p_data->_scene_point != scene_point || _p_data->_viewport_rect.contains( viewport_rect ) == false  )  {
+    if ( _p_data->_is_changed || _p_data->_transform != transform || 
+         _p_data->_scene_point != scene_point || 
+         _p_data->_viewport_rect.contains( viewport_rect ) == false  )  {
         QPainter buffer_painter(_p_data->_double_buffer);
         buffer_painter.setRenderHints(buffer_painter.renderHints(), false);
         buffer_painter.setRenderHints(painter.renderHints(), true);
@@ -310,3 +343,9 @@ void ZBaseScene::selfChangedSlot( const QList<QRectF> &region )
         emit rootScene()->changed(region);
     }
 }
+
+bool ZBaseScene::doubleBufferRenderFlag() const
+{
+    return _p_data->_double_buffer_render_flag;
+}
+

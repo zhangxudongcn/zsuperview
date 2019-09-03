@@ -25,7 +25,9 @@ public:
     void moveChildDown( ZBaseScene *child_scene );
     void moveChildTop( ZBaseScene *child_scene );
     void moveChildBottom( ZBaseScene *child_scene );
-                      
+
+    bool isDoubleBuffering() const;
+    virtual void setDoubleBuffering( bool flag );
 
     // make follow base class function to virtual function
     virtual void setSceneRect(const QRectF &rect);
@@ -44,6 +46,8 @@ protected:
     virtual void translateDoubleBuffer( int dx, int dy, const QRect &viewport_rect );
 protected slots:
     void selfChangedSlot( const QList<QRectF> &region );
+private:
+    bool doubleBufferRenderFlag() const;
 private:
     ZBaseScenePrivate *_p_data;
 };

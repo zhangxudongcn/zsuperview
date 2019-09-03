@@ -4,6 +4,13 @@
 #include <QStyleOptionRubberBand>
 #include <QStyle>
 #include <omp.h>
+class ZBaseViewPrivate  {
+public:
+    ZBaseViewPrivate() : _is_double_buffering( true ) {}
+    ~ZBaseViewPrivate(){}
+    bool _is_double_buffering;
+};
+
 ZBaseView::ZBaseView( QWidget *parent ) : QGraphicsView( parent )
 {
 }
@@ -18,6 +25,21 @@ void ZBaseView::setScene(QGraphicsScene *scene)
     if ( z_scene ) {
         if ( z_scene->parentScene() == nullptr ) {
             QGraphicsView::setScene( scene );
+        }
+    }
+}
+
+bool ZBaseView::isDoubleBuffering() const
+{
+    return _p_data->_is_double_buffering;
+}
+
+void ZBaseView::setDoubleBuffering( bool flag )
+{
+    if ( flag != isDoubleBuffering()) {
+        _p_data->_is_double_buffering = flag;
+        if ( flag ) {
+            // redraw double buffer for every scene if flag == true
         }
     }
 }
@@ -57,9 +79,20 @@ void ZBaseView::paintEvent( QPaintEvent *event )
     QList<ZBaseScene *> render_list = ((ZBaseScene*)scene())->renderList();
     QPointF scene_point = mapToScene( QPoint(0,0));
     #pragma omp parallel for
-    for ( int scene_index = 0; scene_index < render_list.size(); scene_index++ ) {
-        qDebug("i = %d, I am Thread %d", scene_index, omp_get_thread_num());
-        render_list[scene_index]->renderDoubleBuffer( painter, viewport_exposed_rects, scene_exposed_rects, transform(), scene_point, viewport()->rect() );
+    for ( auto &scene_iter : render_list ) {
+        qDebug("I am Thread %d",  omp_get_thread_num());
+        if ( scene_iter->doubleBufferRenderFlag() == true ) {
+            //绘制全部双缓冲内容
+            viewport_exposed_rects.clear();
+            viewport_exposed_rects.push_back(viewport()->rect() );
+            scene_exposed_rects.clear();
+            scene_exposed_rects.push_back( mapToScene( viewport()->rect()).boundingRect() );
+            scene_iter->renderDoubleBuffer(painter, viewport_exposed_rects, scene_exposed_rects, 
+                                      transform(), scene_point, viewport()->rect());
+        } else {
+            scene_iter->renderDoubleBuffer(painter, viewport_exposed_rects, scene_exposed_rects, 
+                                      transform(), scene_point, viewport()->rect());
+        }
     }
 
     for ( int r_index = 0; r_index < viewport_exposed_rects.size(); r_index++ ) { // openmp 不支持 for( auto &item : container )格式

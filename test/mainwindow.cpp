@@ -22,6 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
 void MainWindow::populateScene()
 {
     scene = new ZBaseScene();
+    scene->setDoubleBuffering( true );
 
     QImage image(":/qt4logo.png");
 
@@ -51,12 +52,14 @@ void MainWindow::populateScene()
     int item_num = 2;
     QRectF scene_rect = scene->sceneRect();
     top_scene = new ZBaseScene();
+    top_scene->setDoubleBuffering(true);
     for ( int i = 0; i < item_num; i++ ) {
         top_scene->addLine( random() % int( scene_rect.width() ) - scene_rect.width()/2, random() % int( scene_rect.height() ) - scene_rect.height()/2, 
                             random() % int( scene_rect.width() )- scene_rect.width()/2, random() % int( scene_rect.height() ) - scene_rect.height()/2, QPen(Qt::red, 0));
     }
     scene->addChild(  top_scene );
     tmp_scene = new ZBaseScene();
+    tmp_scene->setDoubleBuffering(true );
     double step = scene_rect.width() / item_num;
     for ( int i = 0; i < item_num; i++ ) {
         //tmp_scene->addLine( random() % int( scene_rect.width() ) - scene_rect.width()/2, random() % int( scene_rect.height() ) - scene_rect.height()/2, 
