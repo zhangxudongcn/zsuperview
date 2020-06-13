@@ -62,7 +62,7 @@ public:
 
 ZBaseScene::ZBaseScene() : QGraphicsScene( 0 ), _p_data( new ZBaseScenePrivate() )
 {
-    connect( this, &ZBaseScene::changed, this, &ZBaseScene::selfChangedSlot );
+    connect( this, &QGraphicsScene::changed, this, &ZBaseScene::selfChangedSlot );
     _p_data->setDoubleBuffer();
 }
 
@@ -154,7 +154,7 @@ void ZBaseScene::swapChild( ZBaseScene *child_1, ZBaseScene *child_2 )
     if ( child_1->parentScene() == this && child_2->parentScene() == this && child_1 != child_2 ) {
         int child_1_index = _p_data->_children.indexOf( child_1 );
         int child_2_index = _p_data->_children.indexOf( child_2 );
-        _p_data->_children.swap( child_1_index, child_2_index );
+        _p_data->_children.swapItemsAt( child_1_index, child_2_index );
         if ( child_1->isSceneVisible() || child_2->isSceneVisible() ) {
             emit rootScene()->changed(QList<QRectF>({ sceneRect()}));
         }
@@ -292,7 +292,7 @@ bool ZBaseScene::event(QEvent *event)
 }
 
 void ZBaseScene::renderDoubleBuffer( const QPainter &painter, 
-                                     const QList<QRect> viewport_exposed_rects, 
+                                     const QList<QRect> &viewport_exposed_rects, 
                                      const QList<QRectF> &scene_exposed_rects,
                                      const QTransform &transform, 
                                      const QPointF &scene_point, const QRect &viewport_rect )

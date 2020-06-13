@@ -78,19 +78,20 @@ void ZBaseView::paintEvent( QPaintEvent *event )
     // render double buffer
     QList<ZBaseScene *> render_list = ((ZBaseScene*)scene())->renderList();
     QPointF scene_point = mapToScene( QPoint(0,0));
-    #pragma omp parallel for
-    for ( auto &scene_iter : render_list ) {
+    #pragma omp parallel for private( viewport_exposed_rects, scene_exposed_rects )
+    for ( int scene_index = 0; scene_index < render_list.size(); scene_index++ ) {
+    //for ( auto &scene_iter : render_list ) {
         qDebug("I am Thread %d",  omp_get_thread_num());
-        if ( scene_iter->doubleBufferRenderFlag() == true ) {
+        if ( render_list[scene_index]->doubleBufferRenderFlag() == true ) {
             //绘制全部双缓冲内容
             viewport_exposed_rects.clear();
             viewport_exposed_rects.push_back(viewport()->rect() );
             scene_exposed_rects.clear();
             scene_exposed_rects.push_back( mapToScene( viewport()->rect()).boundingRect() );
-            scene_iter->renderDoubleBuffer(painter, viewport_exposed_rects, scene_exposed_rects, 
+            render_list[scene_index]->renderDoubleBuffer(painter, viewport_exposed_rects, scene_exposed_rects, 
                                       transform(), scene_point, viewport()->rect());
         } else {
-            scene_iter->renderDoubleBuffer(painter, viewport_exposed_rects, scene_exposed_rects, 
+            render_list[scene_index]->renderDoubleBuffer(painter, viewport_exposed_rects, scene_exposed_rects, 
                                       transform(), scene_point, viewport()->rect());
         }
     }
